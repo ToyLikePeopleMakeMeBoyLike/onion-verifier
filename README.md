@@ -35,32 +35,30 @@ A Next.js full-stack application to verify and shorten `.onion` links securely. 
 
 ## Directory Structure
 
+```
 onion-verifier/
 ├── README.md
 ├── data/
-│ └── urls.json # Server JSON store: slug → ciphertext
+│   └── urls.json          # Server JSON store: slug → ciphertext
 ├── pages/
-│ ├── api/
-│ │ ├── verify.js # POST slug & ciphertext
-│ │ └── ciphertext/
-│ │ └── [slug].js # GET ciphertext by slug
-│ ├── _app.js # Global CSS import
-│ ├── index.js # Client encrypted form
-│ └── [slug].js # Client decryption & redirect
+│   ├── api/
+│   │   ├── verify.js      # POST slug & ciphertext
+│   │   └── ciphertext/
+│   │       └── [slug].js  # GET ciphertext by slug
+│   ├── _app.js            # Global CSS import
+│   ├── index.js           # Client encrypted form
+│   └── [slug].js          # Client decryption & redirect
 ├── public/
-│ └── favicon.ico
+│   └── favicon.ico
 ├── styles/
-│ └── globals.css # Tor color palette & animation
+│   └── globals.css        # Tor color palette & animation
 ├── utils/
-│ └── wordlists.js # Adjective & noun arrays
+│   └── wordlists.js       # Adjective & noun arrays
 ├── .devcontainer/
-│ └── devcontainer.json
+│   └── devcontainer.json
 ├── package.json
-└── vercel.json # (optional) Vercel config
-
-yaml
-Copy
-Edit
+└── vercel.json            # (optional) Vercel config
+```
 
 ---
 
@@ -71,47 +69,50 @@ git clone <your-repo-url>
 cd onion-verifier
 npm install
 npm run dev
-Environment Variables
-BASE_URL (optional): override the base URL used when constructing short links (e.g. https://short.example.com).
+```
 
-Usage
-Navigate to http://localhost:3000
+---
 
-On first use, a symmetric AES-GCM key is generated and saved in browser storage.
+## Environment Variables
 
-Enter your .onion URL in the form.
+- `BASE_URL` (optional): override the base URL used when constructing short links (e.g. `https://short.example.com`).
 
-The client encrypts it locally and POSTs
+---
 
-json
-Copy
-Edit
-{ "slug": "<generatedSlug>", "ciphertext": "<iv:encryptedData>" }
-to /api/verify.
+## Usage
 
-If valid, the server returns a short link, e.g.
+1. Navigate to `http://localhost:3000`  
+2. On first use, a symmetric AES-GCM key is generated and saved in browser storage.  
+3. Enter your `.onion` URL in the form.  
+4. The client encrypts it locally and POSTs  
+   ```json
+   { "slug": "<generatedSlug>", "ciphertext": "<iv:encryptedData>" }
+   ```  
+   to `/api/verify`.  
+5. If valid, the server returns a short link, e.g.:  
+   ```
+   https://yourdomain.com/flyingCapibara
+   ```  
+6. Visiting that short link loads the client redirect page, fetches ciphertext, decrypts it, and redirects to the real `.onion` URL.
 
-arduino
-Copy
-Edit
-https://yourdomain.com/flyingCapibara
-Visiting that short link loads the client redirect page, fetches ciphertext, decrypts it, and redirects to the real .onion URL.
+---
 
-Encryption Flow
-Key Generation
-js
-Copy
-Edit
+## Encryption Flow
+
+### Key Generation
+
+```js
 const key = await window.crypto.subtle.generateKey(
   { name: "AES-GCM", length: 256 },
   true,
   ["encrypt", "decrypt"]
 );
 // Store this key in IndexedDB or localStorage
-Encryption
-js
-Copy
-Edit
+```
+
+### Encryption
+
+```js
 async function encryptUrl(plaintextUrl, key) {
   const encoder = new TextEncoder();
   const data    = encoder.encode(plaintextUrl);
@@ -125,10 +126,11 @@ async function encryptUrl(plaintextUrl, key) {
   const b64Ct = btoa(String.fromCharCode(...new Uint8Array(cipher)));
   return `${b64Iv}:${b64Ct}`;
 }
-Decryption
-js
-Copy
-Edit
+```
+
+### Decryption
+
+```js
 async function decryptUrl(payload, key) {
   const [b64Iv, b64Ct] = payload.split(":");
   const iv = Uint8Array.from(atob(b64Iv), c => c.charCodeAt(0));
@@ -140,68 +142,72 @@ async function decryptUrl(payload, key) {
   );
   return new TextDecoder().decode(plain);
 }
-API Routes
-POST /api/verify
-Request Body:
+```
 
-json
-Copy
-Edit
-{
-  "slug": "string",
-  "ciphertext": "string"
-}
-Behavior:
+---
 
-Validates the .onion URL format.
+## API Routes
 
-Stores urls.json[slug] = ciphertext.
+### `POST /api/verify`
 
-Returns { success: true, link: "<BASE_URL>/<slug>" } on success.
+- **Request Body**:  
+  ```json
+  {
+    "slug": "string",
+    "ciphertext": "string"
+  }
+  ```
+- **Behavior**:  
+  - Validates the `.onion` URL format.  
+  - Stores `urls.json[slug] = ciphertext`.  
+  - Returns `{ success: true, link: "<BASE_URL>/<slug>" }` on success.
 
-GET /api/ciphertext/[slug]
-Response:
+### `GET /api/ciphertext/[slug]`
 
-json
-Copy
-Edit
-{ "ciphertext": "string" }
-Client Redirect
-The page at pages/[slug].js runs in the browser and:
+- **Response**:  
+  ```json
+  { "ciphertext": "string" }
+  ```
 
-Fetches the ciphertext from
+---
 
-bash
-Copy
-Edit
-GET /api/ciphertext/{slug}
-Decrypts it using the stored AES key.
+## Client Redirect
 
-Performs
+The page at `pages/[slug].js` runs in the browser and:
 
-js
-Copy
-Edit
-window.location.href = decryptedOnionUrl;
-Security Considerations
-Key Management: Protect the client-side AES key (mitigate XSS risks).
+1. Fetches the ciphertext from  
+   ```
+   GET /api/ciphertext/{slug}
+   ```
+2. Decrypts it using the stored AES key.  
+3. Performs  
+   ```js
+   window.location.href = decryptedOnionUrl;
+   ```
 
-Integrity: AES-GCM provides built-in authentication—tampering is detected.
+---
 
-HTTPS Only: Serve over HTTPS to protect ciphertext and keys in transit.
+## Security Considerations
 
-Storage: Use secure browser storage (IndexedDB > localStorage).
+- **Key Management**: Protect the client-side AES key (mitigate XSS risks).  
+- **Integrity**: AES-GCM provides built-in authentication—tampering is detected.  
+- **HTTPS Only**: Serve over HTTPS to protect ciphertext and keys in transit.  
+- **Storage**: Use secure browser storage (IndexedDB > localStorage).
 
-Deployment
-Commit & push to GitHub.
+---
 
-Deploy with Vercel:
+## Deployment
 
-bash
-Copy
-Edit
-vercel --prod
-Configure custom domain and any environment variables in the Vercel dashboard.
+1. Commit & push to GitHub.  
+2. Deploy with Vercel:
 
-License
-This project is released under the MIT License.
+   ```bash
+   vercel --prod
+   ```
+3. Configure custom domain and any environment variables in the Vercel dashboard.
+
+---
+
+## License
+
+This project is released under the [MIT License](https://opensource.org/licenses/MIT).
