@@ -1,0 +1,93 @@
+:root {
+  /* Tor Styleguide colors */
+  --tor-purple:   #7D4698;
+  --tor-dark-p:   #59316B;
+  --tor-green:    #68B030;
+  --tor-grey:     #F8F9FA;
+  --tor-dark-g:   #333A41;
+  --tor-white:    #FFFFFF;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background-color: var(--tor-dark-g);
+  color: var(--tor-white);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+}
+
+a {
+  color: var(--tor-green);
+}
+a:hover {
+  text-decoration: underline;
+}
+
+input {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 2px solid var(--tor-purple);
+  border-radius: 4px;
+  background: var(--tor-grey);
+  color: var(--tor-dark-g);
+  outline: none;
+  transition: border-color 0.2s;
+}
+input:focus {
+  border-color: var(--tor-green);
+}
+
+button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--tor-purple);
+  color: var(--tor-white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+button:hover {
+  background: var(--tor-dark-p);
+}
+
+/* Onion‐layer animation */
+.onion-loader {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 2rem auto;
+}
+.onion-loader .ring {
+  position: absolute;
+  top: 0; left: 0;
+  box-sizing: border-box;
+  border: 3px dashed var(--tor-green);
+  border-radius: 50%;
+  animation: spin linear infinite;
+}
+.onion-loader .ring:nth-child(1) {
+  width: 100%; height: 100%;
+  animation-duration: 6s;
+}
+.onion-loader .ring:nth-child(2) {
+  width: 70%; height: 70%;
+  top: 15%; left: 15%;
+  animation-duration: 8s;
+}
+.onion-loader .ring:nth-child(3) {
+  width: 40%; height: 40%;
+  top: 30%; left: 30%;
+  animation-duration: 10s;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

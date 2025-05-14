@@ -1,0 +1,7 @@
+{
+  "name": "Onion Verifier",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  }
+}
